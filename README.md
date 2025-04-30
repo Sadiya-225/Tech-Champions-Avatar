@@ -2,7 +2,7 @@
 
 Welcome to the Avatar! Avatar provides AI-driven Career Insights, Mock Interview Generation, Resume Building, and Personalized Career Guidance.
 
-🔗 Live Demo: [Website Link](https://sigma-ai-career-coach.vercel.app/)
+🔗 Live Demo: [Website Link](https://tech-champions-avatar.vercel.app/)
 
 ## Features
 
@@ -19,11 +19,11 @@ To install and run the project locally, follow these steps:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Sadiya-125/Hack4Good-2025-Sigma-AI.git
+   git clone https://github.com/Sadiya-125/Tech-Champions-Avatar.git
    ```
 2. Navigate to the project directory:
    ```bash
-   cd Hack4Good-2025-Sigma-AI
+   cd Tech-Champions-Avatar
    ```
 3. Install dependencies:
    ```bash
