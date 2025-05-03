@@ -61,6 +61,17 @@ export default async function Header() {
               </Button>
             </Link>
 
+            {/* Collaboration Button */}
+            <Link href="https://avatar-project-portal.vercel.app/">
+              <Button variant="outline" className="hidden md:inline-flex gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Collaborate
+              </Button>
+              <Button variant="ghost" className="md:hidden w-10 h-10 p-0">
+                <GraduationCap className="h-4 w-4" />
+              </Button>
+            </Link>
+
             {/* Growth Tools Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
