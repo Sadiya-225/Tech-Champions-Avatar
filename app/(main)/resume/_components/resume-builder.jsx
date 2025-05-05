@@ -24,7 +24,6 @@ import useFetch from "@/hooks/use-fetch";
 import { useUser } from "@clerk/nextjs";
 import { entriesToMarkdown } from "@/app/lib/helper";
 import { resumeSchema } from "@/app/lib/schema";
-import html2pdf from "html2pdf.js";
 
 // Add MCP Server integration
 const MCP_SERVER_URL = "http://localhost:5000";
@@ -55,15 +54,18 @@ const generatePresentationWithMCP = async (content) => {
   try {
     // Clean up the resume content
     const cleanContent = content
-      .replace(/##\s*<div align="center">(.*?)<\/div>/g, '$1') // Remove markdown headers and div tags
-      .replace(/<div align="center">/g, '') // Remove opening div tags
-      .replace(/<\/div>/g, '') // Remove closing div tags
-      .replace(/\n\s*\n/g, '\n') // Remove multiple newlines
-      .replace(/\[(.*?)\]\((.*?)\)/g, '$1: $2') // Convert markdown links to text
+      .replace(/##\s*<div align="center">(.*?)<\/div>/g, "$1") // Remove markdown headers and div tags
+      .replace(/<div align="center">/g, "") // Remove opening div tags
+      .replace(/<\/div>/g, "") // Remove closing div tags
+      .replace(/\n\s*\n/g, "\n") // Remove multiple newlines
+      .replace(/\[(.*?)\]\((.*?)\)/g, "$1: $2") // Convert markdown links to text
       .trim();
 
     const formData = new FormData();
-    formData.append("prompt", `Generate a professional presentation from this resume:\n\n${cleanContent}`);
+    formData.append(
+      "prompt",
+      `Generate a professional presentation from this resume:\n\n${cleanContent}`
+    );
 
     const response = await fetch(`${MCP_SERVER_URL}/generate`, {
       method: "POST",
@@ -174,6 +176,7 @@ export default function ResumeBuilder({ initialContent }) {
   const generatePDF = async () => {
     setIsGenerating(true);
     try {
+      const html2pdf = (await import("html2pdf.js")).default;
       const element = document.getElementById("resume-pdf");
       const opt = {
         margin: [15, 15],
@@ -195,19 +198,21 @@ export default function ResumeBuilder({ initialContent }) {
   const generatePPT = async () => {
     try {
       setIsGeneratingPPT(true);
-      
+
       // Check if MCP server is running
       const isRunning = await checkMCPServer();
       setIsMCPServerRunning(isRunning);
-      
+
       if (!isRunning) {
-        toast.error("MCP server is not running. Please start the PowerPoint MCP server to use this feature.");
+        toast.error(
+          "MCP server is not running. Please start the PowerPoint MCP server to use this feature."
+        );
         return;
       }
 
       // Generate presentation using MCP
       const result = await generatePresentationWithMCP(previewContent);
-      
+
       if (result.status === "success") {
         toast.success("Presentation generated successfully!");
       } else {
@@ -242,11 +247,7 @@ export default function ResumeBuilder({ initialContent }) {
           Resume Builder
         </h1>
         <div className="space-x-2 px-5">
-          <Button
-            variant="destructive"
-            onClick={handleSubmit(onSubmit)}
-            disabled={isSaving}
-          >
+          <Button onClick={handleSubmit(onSubmit)} disabled={isSaving}>
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -272,20 +273,19 @@ export default function ResumeBuilder({ initialContent }) {
               </>
             )}
           </Button>
-          <Button 
-            onClick={generatePPT} 
+          <Button
+            onClick={generatePPT}
             disabled={isGeneratingPPT}
             variant="outline"
-            className="bg-primary/10 hover:bg-primary/20"
           >
             {isGeneratingPPT ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Generating PPT...
               </>
             ) : (
               <>
-                <FileText className="mr-2 h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 Generate PPT
               </>
             )}

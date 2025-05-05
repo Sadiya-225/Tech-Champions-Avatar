@@ -158,6 +158,20 @@ const DashboardView = ({ insights }) => {
                 <XAxis 
                   dataKey="name" 
                   axisLine={{ stroke: 'hsl(var(--primary))' }}
+                  tick={({ x, y, payload }) => (
+                    <g transform={`translate(${x},${y})`}>
+                      <text
+                        x={0}
+                        y={0}
+                        dy={16}
+                        textAnchor="middle"
+                        fill="hsl(var(--primary))"
+                        className="hidden md:block"
+                      >
+                        {payload.value}
+                      </text>
+                    </g>
+                  )}
                 />
                 <YAxis 
                   tick={{ fill: 'hsl(var(--primary))' }}

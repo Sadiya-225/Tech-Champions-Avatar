@@ -91,7 +91,7 @@ export default function JobsPage() {
               />
             </div>
             <Button type="submit" className="w-full md:w-auto">
-              <Search className="mr-1 h-4 w-4" />
+              <Search className="h-4 w-4" />
               Search Jobs
             </Button>
           </div>
@@ -148,7 +148,7 @@ export default function JobsPage() {
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button onClick={() => window.open(job.job_link, "_blank")}>
-                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <ExternalLink className="h-4 w-4" />
                     View on LinkedIn
                   </Button>
                 </CardFooter>

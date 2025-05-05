@@ -29,7 +29,7 @@ export default async function Header() {
         <Link href="/" className="flex items-center">
           <Image
             src="/logo.png"
-            alt="Sigma AI Logo"
+            alt="Avatar Logo"
             width={120}
             height={40}
             priority
@@ -55,15 +55,24 @@ export default async function Header() {
 
             {/* Job Listings Button */}
             <Link href="/jobs">
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="hidden md:inline-flex items-center gap-2"
+              >
                 <Briefcase className="h-4 w-4" />
-                <span className="hidden md:block">Job Listings</span>
+                Job Listings
+              </Button>
+              <Button variant="ghost" className="md:hidden w-10 h-10 p-0">
+                <Briefcase className="h-4 w-4" />
               </Button>
             </Link>
 
             {/* Collaboration Button */}
             <Link href="https://avatar-project-portal.vercel.app/">
-              <Button variant="outline" className="hidden md:inline-flex gap-2">
+              <Button
+                variant="outline"
+                className="hidden md:inline-flex items-center gap-2"
+              >
                 <GraduationCap className="h-4 w-4" />
                 Collaborate
               </Button>

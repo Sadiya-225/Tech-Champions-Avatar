@@ -101,7 +101,7 @@ const OnboardingForm = ({ industries }) => {
                 }}
               >
                 <SelectTrigger id="industry">
-                  <SelectValue placeholder="Select an industry" />
+                  <SelectValue placeholder="Select an Industry" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -128,7 +128,7 @@ const OnboardingForm = ({ industries }) => {
                   onValueChange={(value) => setValue("subIndustry", value)}
                 >
                   <SelectTrigger id="subIndustry">
-                    <SelectValue placeholder="Select your specialization" />
+                    <SelectValue placeholder="Select your Specialization" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -156,7 +156,7 @@ const OnboardingForm = ({ industries }) => {
                 type="number"
                 min="0"
                 max="50"
-                placeholder="Enter years of experience"
+                placeholder="Enter Years of Experience"
                 {...register("experience")}
               />
               {errors.experience && (
@@ -174,7 +174,7 @@ const OnboardingForm = ({ industries }) => {
                 {...register("skills")}
               />
               <p className="text-sm text-muted-foreground">
-                Separate multiple skills with commas
+                Separate Multiple Skills with Commas
               </p>
               {errors.skills && (
                 <p className="text-sm text-red-500">{errors.skills.message}</p>
@@ -185,7 +185,7 @@ const OnboardingForm = ({ industries }) => {
               <Label htmlFor="bio">Professional Bio</Label>
               <Textarea
                 id="bio"
-                placeholder="Tell us about your professional background..."
+                placeholder="Tell us about your Professional Background..."
                 className="h-32"
                 {...register("bio")}
               />

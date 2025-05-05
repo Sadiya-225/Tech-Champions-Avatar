@@ -35,7 +35,7 @@ const HeroSection = () => {
             <br />
             An AI Career Coach
           </h1>
-          <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl">
+          <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl px-4 sm:px-6 md:px-0">
             Advance your career with personalized guidance, interview prep, and
             AI-powered tools for job success.
           </p>
