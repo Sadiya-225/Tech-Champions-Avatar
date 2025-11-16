@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-const SCRAPINGDOG_API_KEY = "6809302bba78811cf9a68a62";
+const SCRAPINGDOG_API_KEY = "6919acaf409f46424b30a3f8";
 const SCRAPINGDOG_URL = "https://api.scrapingdog.com/linkedinjobs/";
 
 export async function GET(request) {
@@ -11,7 +11,10 @@ export async function GET(request) {
     const location = searchParams.get("location");
 
     if (!query || !location) {
-      return NextResponse.json({ error: "Both query and location are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Both query and location are required" },
+        { status: 400 }
+      );
     }
 
     const params = {
