@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useFormPersistence, clearFormPersistence } from "@/hooks/useFormPersistence";
 import {
   AlertTriangle,
   Download,
@@ -27,6 +28,105 @@ import { resumeSchema } from "@/app/lib/schema";
 
 // Add MCP Server integration
 const MCP_SERVER_URL = "http://localhost:5000";
+
+// Helper function to parse saved markdown content and extract form data
+const parseMarkdownToFormData = (markdown) => {
+  if (!markdown) return null;
+
+  try {
+    const lines = markdown.split('\n');
+    const data = {
+      contactInfo: {},
+      summary: "",
+      skills: "",
+      experience: [],
+      education: [],
+      projects: [],
+    };
+
+    let currentSection = "";
+    let sectionContent = "";
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Extract contact info from header
+      if (line.includes("## <div align=\"center\">")) {
+        const nameMatch = line.match(/##\s*<div align="center">(.+?)<\/div>/);
+        if (nameMatch) {
+          data.contactInfo.name = nameMatch[1].trim();
+        }
+      }
+
+      // Extract email, phone, linkedin, twitter from contact section
+      if (line.includes("📧")) {
+        const emailMatch = line.match(/📧\s*(\S+@\S+)/);
+        if (emailMatch) data.contactInfo.email = emailMatch[1];
+      }
+      if (line.includes("📱")) {
+        const phoneMatch = line.match(/📱\s*([\d\s+]+)/);
+        if (phoneMatch) data.contactInfo.mobile = phoneMatch[1].trim();
+      }
+      if (line.includes("💼")) {
+        const linkedinMatch = line.match(/💼\s*\[(.+?)\]\((.+?)\)/);
+        if (linkedinMatch) data.contactInfo.linkedin = linkedinMatch[2];
+      }
+      if (line.includes("🐦")) {
+        const twitterMatch = line.match(/🐦\s*\[(.+?)\]\((.+?)\)/);
+        if (twitterMatch) data.contactInfo.twitter = twitterMatch[2];
+      }
+
+      // Extract sections
+      if (line.startsWith("## Professional Summary")) {
+        currentSection = "summary";
+        sectionContent = "";
+        continue;
+      }
+      if (line.startsWith("## Skills")) {
+        if (currentSection === "summary") {
+          data.summary = sectionContent.trim();
+        }
+        currentSection = "skills";
+        sectionContent = "";
+        continue;
+      }
+      if (line.startsWith("## Work Experience")) {
+        if (currentSection === "skills") {
+          data.skills = sectionContent.trim();
+        }
+        currentSection = "experience";
+        sectionContent = "";
+        continue;
+      }
+      if (line.startsWith("## Education")) {
+        currentSection = "education";
+        sectionContent = "";
+        continue;
+      }
+      if (line.startsWith("## Projects")) {
+        currentSection = "projects";
+        sectionContent = "";
+        continue;
+      }
+
+      if (currentSection && line.trim() && !line.startsWith("##")) {
+        sectionContent += line + "\n";
+      }
+    }
+
+    // Add final section content
+    if (currentSection === "summary") {
+      data.summary = sectionContent.trim();
+    } else if (currentSection === "skills") {
+      data.skills = sectionContent.trim();
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error parsing markdown:", error);
+    return null;
+  }
+};
 
 const checkMCPServer = async () => {
   try {
@@ -64,7 +164,7 @@ const generatePresentationWithMCP = async (content) => {
     const formData = new FormData();
     formData.append(
       "prompt",
-      `Generate a professional presentation from this resume:\n\n${cleanContent}`
+      `Generate a professional presentation from this resume:\n\n${cleanContent}`,
     );
 
     const response = await fetch(`${MCP_SERVER_URL}/generate`, {
@@ -84,7 +184,7 @@ const generatePresentationWithMCP = async (content) => {
   }
 };
 
-export default function ResumeBuilder({ initialContent }) {
+export default function ResumeBuilder({ initialContent, resumeData }) {
   const [activeTab, setActiveTab] = useState("edit");
   const [previewContent, setPreviewContent] = useState(initialContent);
   const { user } = useUser();
@@ -97,17 +197,64 @@ export default function ResumeBuilder({ initialContent }) {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(resumeSchema),
     defaultValues: {
-      contactInfo: {},
+      contactInfo: {
+        name: "",
+        email: "",
+        mobile: "",
+        linkedin: "",
+        twitter: "",
+      },
       summary: "",
       skills: "",
       experience: [],
       education: [],
       projects: [],
     },
+    shouldUnregister: false,
+  });
+
+  // Load persisted resume data on mount with stable callback to prevent infinite loops
+  const handleLoadPersistedData = useCallback((loadedData) => {
+    // IMPORTANT: Only load persisted data if there's NO database resume data
+    // This prevents localStorage from overwriting database content
+    if (!resumeData?.content && loadedData && Object.keys(loadedData).length > 0) {
+      console.log("Loading persisted form data:", loadedData);
+      reset(loadedData, { keepValues: false });
+    }
+  }, [reset, resumeData?.content]);
+
+  // Prefill form with saved resume data from database
+  useEffect(() => {
+    if (resumeData?.content) {
+      const parsedData = parseMarkdownToFormData(resumeData.content);
+      if (parsedData && Object.keys(parsedData).length > 0) {
+        console.log("Resetting form with parsed resume data:", parsedData);
+        // Clear persisted localStorage data since we're using database data
+        clearFormPersistence("resumeFormData");
+        // Ensure all nested contactInfo fields are present
+        const dataWithFullContactInfo = {
+          ...parsedData,
+          contactInfo: {
+            name: parsedData.contactInfo?.name || "",
+            email: parsedData.contactInfo?.email || "",
+            mobile: parsedData.contactInfo?.mobile || "",
+            linkedin: parsedData.contactInfo?.linkedin || "",
+            twitter: parsedData.contactInfo?.twitter || "",
+          },
+        };
+        reset(dataWithFullContactInfo);
+      }
+    }
+  }, [resumeData?.content, reset]);
+
+  useFormPersistence(watch(), handleLoadPersistedData, {
+    key: "resumeFormData",
+    debounceMs: 1000,
   });
 
   const {
@@ -121,8 +268,12 @@ export default function ResumeBuilder({ initialContent }) {
   const formValues = watch();
 
   useEffect(() => {
-    if (initialContent) setActiveTab("preview");
-  }, [initialContent]);
+    // Only switch to preview if there's initial content AND it wasn't just loaded from database
+    // Keep user on edit tab when returning to resume builder so they can continue editing
+    if (initialContent && !resumeData) {
+      setActiveTab("preview");
+    }
+  }, [initialContent, resumeData]);
 
   // Update preview content when form values change
   useEffect(() => {
@@ -151,8 +302,10 @@ export default function ResumeBuilder({ initialContent }) {
       parts.push(`💼 [LinkedIn](${contactInfo.linkedin})`);
     if (contactInfo.twitter) parts.push(`🐦 [Twitter](${contactInfo.twitter})`);
 
+    const fullName = contactInfo.name || user?.name || "Your Name";
+
     return parts.length > 0
-      ? `## <div align="center">${user.fullName}</div>
+      ? `## <div align="center">${fullName}</div>
         \n\n<div align="center">\n\n${parts.join(" | ")}\n\n</div>`
       : "";
   };
@@ -205,7 +358,7 @@ export default function ResumeBuilder({ initialContent }) {
 
       if (!isRunning) {
         toast.error(
-          "MCP server is not running. Please start the PowerPoint MCP server to use this feature."
+          "MCP server is not running. Please start the PowerPoint MCP server to use this feature.",
         );
         return;
       }
@@ -290,6 +443,17 @@ export default function ResumeBuilder({ initialContent }) {
               </>
             )}
           </Button>
+          <Button
+            onClick={() => {
+              clearFormPersistence("resumeFormData");
+              reset();
+              toast.success("Form cleared. You can start fresh.");
+            }}
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+          >
+            Clear Form
+          </Button>
         </div>
       </div>
 
@@ -305,6 +469,20 @@ export default function ResumeBuilder({ initialContent }) {
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Contact Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Full Name</label>
+                  <Input
+                    {...register("contactInfo.name")}
+                    type="text"
+                    placeholder="Your Full Name"
+                    error={errors.contactInfo?.name}
+                  />
+                  {errors.contactInfo?.name && (
+                    <p className="text-sm text-red-500">
+                      {errors.contactInfo.name.message}
+                    </p>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Email</label>
                   <Input
@@ -492,14 +670,6 @@ export default function ResumeBuilder({ initialContent }) {
             </Button>
           )}
 
-          {activeTab === "preview" && resumeMode !== "preview" && (
-            <div className="flex p-3 gap-2 items-center border-2 border-yellow-600 text-yellow-600 rounded mb-2">
-              <AlertTriangle className="h-5 w-5" />
-              <span className="text-sm">
-                You will lose edited markdown if you update the form data.
-              </span>
-            </div>
-          )}
           <div className="border rounded-lg">
             <MDEditor
               value={previewContent}

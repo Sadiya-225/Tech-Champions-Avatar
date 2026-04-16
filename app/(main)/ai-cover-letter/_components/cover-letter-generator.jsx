@@ -100,6 +100,15 @@ export default function CoverLetterGenerator() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="companyAddress">Company Address (Optional)</Label>
+              <Input
+                id="companyAddress"
+                placeholder="Enter company address"
+                {...register("companyAddress")}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="jobDescription">Job Description</Label>
               <Textarea
                 id="jobDescription"

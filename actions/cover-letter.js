@@ -2,10 +2,7 @@
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+import { selectCoverLetterTemplate } from "@/lib/coverLetterTemplates";
 
 export async function generateCoverLetter(data) {
   const { userId } = await auth();
@@ -17,35 +14,25 @@ export async function generateCoverLetter(data) {
 
   if (!user) throw new Error("User not found");
 
-  const prompt = `
-    Write a professional cover letter for a ${data.jobTitle} position at ${
-    data.companyName
-  }.
-    
-    About the candidate:
-    - Industry: ${user.industry}
-    - Years of Experience: ${user.experience}
-    - Skills: ${user.skills?.join(", ")}
-    - Professional Background: ${user.bio}
-    
-    Job Description:
-    ${data.jobDescription}
-    
-    Requirements:
-    1. Use a professional, enthusiastic tone
-    2. Highlight relevant skills and experience
-    3. Show understanding of the company's needs
-    4. Keep it concise (max 400 words)
-    5. Use proper business letter formatting in markdown
-    6. Include specific examples of achievements
-    7. Relate candidate's background to job requirements
-    
-    Format the letter in markdown.
-  `;
-
   try {
-    const result = await model.generateContent(prompt);
-    const content = result.response.text().trim();
+    // Select appropriate template based on job title
+    const templateGenerator = selectCoverLetterTemplate(data.jobTitle);
+
+    // Generate cover letter using template
+    const content = templateGenerator({
+      name: user.name || "Applicant",
+      email: user.email,
+      phone: user.phone || undefined,
+      role: data.jobTitle,
+      companyName: data.companyName,
+      companyAddress: data.companyAddress || undefined,
+      experience: user.experience
+        ? `${user.experience} years of experience`
+        : "several years of experience",
+      skills: user.skills?.join(", ") || "various professional skills",
+      bio: user.bio || "a strong professional background",
+      jobDescription: data.jobDescription,
+    });
 
     const coverLetter = await db.coverLetter.create({
       data: {
